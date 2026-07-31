@@ -1,0 +1,2756 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSProject — Updates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: auto;
+    overscroll-behavior: none;
+  }
+
+  body {
+    background: #e5e5ea;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Inter", sans-serif;
+  }
+
+  /* ===== Figma-style frame label ===== */
+  .frame-wrap {
+    position: relative;
+    transform-origin: center center;
+  }
+  .frame-label {
+    display: none;
+  }
+
+  /* ===== iPhone 16 frame: 393 x 852 pt @1x — flat Figma-style artboard ===== */
+  .device {
+    width: 393px;
+    height: 852px;
+    overflow: hidden;
+  }
+
+  .screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    overflow: hidden;
+    background-color: #e0e3e2;
+    transition: background-color 0.35s ease;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.14);
+  }
+
+  /* ===== On small/actual phone viewports, stop pretending to be a
+     scaled-down artboard and just fill the real screen — same behavior
+     as the nqnq reference's .phone-frame responsive rule. ===== */
+  @media (max-width: 500px) {
+    body {
+      padding: 0;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+    .frame-label {
+      display: none;
+    }
+    .device {
+      width: 100vw;
+      height: 100vh;
+    }
+    .screen {
+      box-shadow: none;
+    }
+  }
+
+  /* ===== Dynamic Island (black pill) — hidden everywhere, desktop & mobile ===== */
+  .dynamic-island {
+    display: none;
+  }
+  /* .dynamic-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 37px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 50;
+  } */
+
+  .status-time {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1c1c1e;
+    letter-spacing: -0.2px;
+  }
+  .status-icons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-icons svg { display: block; }
+
+  /* ===== Status bar scrim: brighter/whiter tint over the photo behind the status bar ===== */
+  .status-scrim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 110px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0));
+    z-index: 40;
+    pointer-events: none;
+  }
+
+  /* ===== Top bar (menu / gear) ===== */
+  .top-bar {
+    position: absolute;
+    top: 78px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+  }
+  .round-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ===== Hero text ===== */
+  .hero {
+    position: absolute;
+    top: 152px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 32px;
+    touch-action: none;
+  }
+  .photo-carousel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+  .photo-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  .photo-track.dragging {
+    transition: none;
+  }
+  .photo-slide {
+    position: relative;
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+  .photo-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+    pointer-events: none;
+  }
+  .photo-slide.slide-2 img {
+    object-position: 44% 20%;
+    transform: scale(1.25);
+  }
+  .photo-slide:first-child img {
+    object-position: 42% 20%;
+    transform: scale(1.22);
+  }
+  .photo-slide::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 45%;
+    background: linear-gradient(to top, rgba(38,33,35,0.55), rgba(38,33,35,0));
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-size: 13px;
+    color: #6b6b74;
+    letter-spacing: 0.2px;
+    margin-bottom: 14px;
+  }
+  .hero-title {
+    font-size: 34px;
+    line-height: 1.18;
+    color: #4a4a52;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+  }
+  .hero-title b {
+    color: #1c1c1e;
+    font-weight: 600;
+  }
+
+  /* ===== Carousel nav chevrons (desktop/mouse only) ===== */
+  .carousel-nav-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.32);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+  }
+  .carousel-nav-btn:hover {
+    background: rgba(0,0,0,0.5);
+  }
+  .carousel-nav-btn.prev { left: 14px; }
+  .carousel-nav-btn.next { right: 14px; }
+  .carousel-nav-btn.is-disabled {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+  .carousel-nav-btn svg { display: block; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .carousel-nav-btn { display: flex; }
+    .photo-carousel:hover .carousel-nav-btn:not(.is-disabled) { opacity: 1; }
+    .banner-detail-hero-carousel:hover .carousel-nav-btn:not(.is-disabled) { opacity: 1; }
+  }
+
+  /* ===== h-scroll nav chevrons (desktop/mouse only) ===== */
+  .h-scroll-wrap {
+    position: relative;
+  }
+  .h-scroll-nav-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.32);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+  }
+  .h-scroll-nav-btn:hover {
+    background: rgba(0,0,0,0.5);
+  }
+  .h-scroll-nav-btn.prev { left: -6px; }
+  .h-scroll-nav-btn.next { right: -6px; }
+  .h-scroll-nav-btn.is-disabled {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+  .h-scroll-nav-btn svg { display: block; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .h-scroll-nav-btn { display: flex; }
+    .h-scroll-wrap:hover .h-scroll-nav-btn:not(.is-disabled) { opacity: 1; }
+  }
+
+  /* ===== Sheet up/down chevrons (desktop/mouse only) =====
+     Purely an extra click-target for desktop convenience; the existing
+     swipe/drag gestures for the sheet are untouched. */
+  .sheet-nav-btn {
+    display: none;
+    position: absolute;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.32);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 35;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, background 0.2s ease;
+  }
+  .sheet-nav-btn:hover {
+    background: rgba(0,0,0,0.5);
+    opacity: 1;
+  }
+  .sheet-nav-btn.up { top: 130px; }
+  .sheet-nav-btn.down { top: 174px; }
+  .sheet-nav-btn.is-disabled {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+  .sheet-nav-btn svg { display: block; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .sheet-nav-btn { display: flex; }
+  }
+
+  /* ===== Glowing orb ===== */
+  .orb-wrap {
+    position: absolute;
+    top: 400px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 220px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 1;
+    touch-action: none;
+  }
+  .orb {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.5) 20%, rgba(215,200,235,0.35) 45%, rgba(180,210,225,0.15) 70%, rgba(180,210,225,0) 100%);
+    filter: blur(0.5px);
+  }
+
+  /* ===== Bottom sheet ===== */
+  .sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    background: #f7f7f9;
+    border-radius: 32px 32px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.08);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(392px); /* 852 - 460 = 392, shows partial height */
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    touch-action: none;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  .sheet.dragging {
+    transition: none;
+  }
+  .sheet.full {
+    transform: translateY(0);
+  }
+  .sheet-drag-handle {
+    flex-shrink: 0;
+    padding: 14px 20px 8px;
+    cursor: grab;
+    transition: padding-top 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .sheet.dragging .sheet-drag-handle {
+    transition: none;
+  }
+  .sheet.full .sheet-drag-handle {
+    padding-top: 66px;
+  }
+  .sheet-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px 28px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .sheet-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  .sheet.full .sheet-scroll {
+    padding-bottom: 60px;
+  }
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: #1c1c1e;
+    border-radius: 3px;
+    margin: 0 auto 18px;
+  }
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .sheet-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1c1c1e;
+  }
+  .sheet-globe-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .sheet-globe-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a8a93;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .sheet-globe-btn:hover {
+    background: #ececef;
+  }
+  .sheet-globe-btn.is-selected {
+    color: #1c1c1e;
+  }
+  .sheet-globe-btn svg {
+    display: block;
+  }
+  .sheet-globe-btn:active {
+    transform: scale(0.9);
+  }
+  .sheet-globe-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.05);
+    padding: 6px;
+    min-width: 150px;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 50;
+  }
+  .sheet-globe-menu.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  .sheet-globe-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1c1c1e;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+  }
+  .sheet-globe-item:hover {
+    background: #f5f5f7;
+  }
+  .sheet-globe-item.active {
+    color: #1c1c1e;
+    font-weight: 600;
+  }
+  .sheet-globe-item-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sheet-globe-item-icon svg {
+    display: block;
+  }
+  .sheet-globe-item-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sheet-globe-item-check {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #1c1c1e;
+  }
+  .sheet-globe-item-check svg {
+    display: block;
+  }
+  .sheet-globe-item.active .sheet-globe-item-check {
+    display: flex;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .row-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .row-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .row-icon.purple {
+    background: radial-gradient(circle at 35% 30%, #9b8cf5, #6a5ae0);
+  }
+  .row-icon.light {
+    background: #f0f0f3;
+  }
+  .row-icon.dark {
+    background: #1c1c1e;
+  }
+  .row-text-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1c1c1e;
+    line-height: 1.3;
+  }
+  .row-text-sub {
+    font-size: 12.5px;
+    color: #9a9aa2;
+    margin-top: 1px;
+    line-height: 1.3;
+  }
+
+  .toggle {
+    width: 46px;
+    height: 28px;
+    border-radius: 14px;
+    background: #6a5ae0;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .row-arrow, .row-bolt {
+    color: #b8b8c0;
+    flex-shrink: 0;
+  }
+  .row-bolt { color: #6a5ae0; }
+
+  /* ===== Pill tags (2 rows, horizontal scroll) ===== */
+  .pill-scroll-wrap {
+    position: relative;
+  }
+  .pill-scroll-wrap .h-scroll-nav-btn.prev { left: -6px; }
+  .pill-scroll-wrap .h-scroll-nav-btn.next { right: -6px; }
+  .pill-scroll-wrap .h-scroll-nav-btn { top: calc(50% - 6px); display: flex; opacity: 1; }
+  .pill-scroll-wrap .h-scroll-nav-btn.is-disabled { opacity: 0 !important; }
+  .pill-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 2px 2px 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    touch-action: pan-x;
+  }
+  .pill-row::-webkit-scrollbar { display: none; }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: #e5e5ea;
+    border: 1px solid transparent;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #1c1c1e;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .pill.active {
+    background: #fff;
+    color: #1c1c1e;
+    border-color: #1c1c1e;
+    font-weight: 700;
+  }
+  .pill.dark {
+    background: #e5e5ea;
+    color: #1c1c1e;
+  }
+  .pill-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #f0f0f3;
+  }
+  .pill.active .pill-icon {
+    background: rgba(0,0,0,0.08);
+  }
+  .pill.dark .pill-icon {
+    background: rgba(255,255,255,0.2);
+  }
+  .pill-icon.purple {
+    background: radial-gradient(circle at 35% 30%, #9b8cf5, #6a5ae0);
+  }
+
+  /* ===== Updates list (partial sheet content) ===== */
+  .updates-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 2px 22px;
+  }
+  .updates-icon-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1c1c1e;
+    flex-shrink: 0;
+  }
+  .updates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    padding: 0 2px 18px;
+  }
+  .updates-divider {
+    height: 1px;
+    background: #ececef;
+    margin: 4px -20px 22px;
+  }
+  .updates-item {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    font-size: 25px;
+    font-weight: 500;
+    color: #1c1c1e;
+    letter-spacing: -0.2px;
+  }
+  .updates-item.muted {
+    color: #c7c7cc;
+  }
+  .content-banner {
+    width: 100%;
+    height: 200px;
+    border-radius: 20px;
+    margin: 4px 0 24px;
+    overflow: hidden;
+  }
+  .content-banner-inner {
+    width: 100%;
+    height: 100%;
+    background: #f5f5f7 url('banner.png') center / cover no-repeat;
+  }
+  .banner-more-pill {
+    position: absolute;
+    left: 34px;
+    top: 148px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.85);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .banner-more-pill svg {
+    flex-shrink: 0;
+  }
+  .pill-panel { display: none; }
+  .pill-panel.active { display: block; }
+  .pill-panel-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #b8b8c0;
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+  .lena-post-card {
+    position: relative;
+    background: #f5f5f7;
+    border: 1px solid #c7c7cc;
+    border-radius: 28px;
+    padding: 10px;
+  }
+  .lena-banner {
+    height: 220px;
+    border-radius: 22px;
+    margin: 0;
+    position: relative;
+  }
+  .lena-banner .content-banner-inner {
+    border-radius: 22px;
+  }
+  .lena-post-footer {
+    padding: 14px 4px 4px;
+  }
+  .lena-post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lena-post-identity {
+    flex: 1;
+    min-width: 0;
+  }
+  .lena-name-sub {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1c1c1e;
+    letter-spacing: -0.1px;
+    line-height: 1.2;
+    margin-top: 5px;
+  }
+  .lena-name-tag {
+    font-size: 11px;
+    font-weight: 500;
+    color: #8a8a93;
+    letter-spacing: 0.2px;
+    margin-top: 2px;
+  }
+  .lena-join-pill {
+    padding: 8px 18px;
+    background: #1c1c1e;
+    color: #fff;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .lena-post-caption {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #3c3c43;
+  }
+  .sort-toggle-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    padding: 0 2px;
+  }
+  .sort-toggle-item {
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #8e8e93;
+    transform: translateY(0);
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  .sort-toggle-item.active {
+    color: #1c1c1e;
+  }
+  .sort-toggle-item:not(.active):hover {
+    transform: translateY(-2px);
+    color: #48484f;
+  }
+  @keyframes sortToggleTap {
+    0% { transform: translateY(0); }
+    40% { transform: translateY(-4px); }
+    100% { transform: translateY(0); }
+  }
+  .sort-toggle-item.tap-lift {
+    animation: sortToggleTap 0.28s ease;
+  }
+  .sort-toggle-sep {
+    color: #1c1c1e;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .sort-toggle-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1c1c1e;
+    margin-left: 1px;
+    cursor: default;
+  }
+  .person-toggle-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .person-toggle-item {
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    color: #8e8e93;
+  }
+  .person-toggle-item.active {
+    color: #1c1c1e;
+  }
+  .person-toggle-sep {
+    color: #1c1c1e;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .lena-post-tags {
+    color: #6a5ae0;
+    font-weight: 500;
+  }
+  .section-block {
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1c1c1e;
+    letter-spacing: -0.2px;
+    margin: 0 0 10px 2px;
+  }
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px 2px;
+  }
+  .section-title-row .section-title {
+    margin: 0;
+  }
+  .section-title-dot {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1c1c1e;
+  }
+  .about-avatar-list {
+    display: flex;
+    flex-direction: column;
+    background: #f5f5f7;
+    border: 0.8px solid #c7c7cc;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .about-avatar-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+  }
+  .about-avatar-card + .about-avatar-card {
+    border-top: 0.8px solid #e6e6ea;
+  }
+  .about-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex: 0 0 44px;
+  }
+  .about-avatar.avatar-lena {
+    background: linear-gradient(135deg, #ffd3c9, #ff9a8b);
+  }
+  .about-avatar.avatar-miu {
+    background: linear-gradient(135deg, #c9d9ff, #a0b8f5);
+  }
+  .about-avatar-identity {
+    flex: 1;
+    min-width: 0;
+  }
+  .about-avatar-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1c1c1e;
+    letter-spacing: -0.1px;
+  }
+  .about-avatar-sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8a8a93;
+    margin-top: 2px;
+  }
+  .about-avatar-arrow {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+  }
+  .h-scroll {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .h-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .h-scroll-item {
+    width: 150px;
+    flex: 0 0 auto;
+    height: 110px;
+    border-radius: 12px;
+    padding: 2px;
+    background: linear-gradient(90deg, #ff5f6d, #6a5ae0);
+  }
+  .h-scroll-item.plain {
+    padding: 6px;
+    background: #f5f5f7;
+    border: 0.8px solid #c7c7cc;
+    border-radius: 16px;
+    width: 190px;
+    overflow: hidden;
+  }
+  .h-scroll-item.plain.playing {
+    background: #1c1c1e;
+    border-color: #1c1c1e;
+  }
+  .h-scroll-item.plain .h-scroll-item-inner {
+    border-radius: 10px;
+    background-size: auto 145%;
+    background-position: center;
+  }
+  .h-scroll-item-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #f5f5f7;
+    background-size: cover;
+    background-position: center;
+  }
+  .h-scroll-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .h-scroll-caption {
+    width: 190px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #1c1c1e;
+    line-height: 1.3;
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 10px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 10px), transparent 100%);
+  }
+  .timeline-item {
+    width: 108px;
+    flex: 0 0 auto;
+  }
+  .timeline-photo {
+    width: 108px;
+    height: 108px;
+    border-radius: 18px;
+    background-size: cover;
+    background-position: center;
+    border: 0.8px solid rgba(0,0,0,0.06);
+  }
+  .timeline-meta {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 5px;
+    margin-top: 8px;
+  }
+  .timeline-year {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8a8a93;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .timeline-dot {
+    font-size: 11px;
+    font-weight: 700;
+    color: #c6c6cc;
+  }
+  .timeline-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1c1c1e;
+    line-height: 1.25;
+    flex-basis: 100%;
+  }
+  .updates-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #b8b8c0;
+    position: relative;
+    top: -10px;
+  }
+  .updates-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 2px 4px;
+    border-top: 1px solid #ececef;
+  }
+
+  /* ===== Feed (revealed on full drag) ===== */
+  .feed {
+    display: none;
+    margin-top: 6px;
+  }
+  .sheet.content-home .feed { display: block; }
+  .sheet.content-home .updates-content { display: none; }
+  .sheet-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .sheet-title-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.28s ease;
+  }
+  .sheet.content-home .sheet-title-chevron {
+    transform: rotate(-180deg);
+  }
+
+  .feed-tabs {
+    display: flex;
+    gap: 24px;
+    padding-bottom: 12px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #ececef;
+  }
+  .feed-tab {
+    font-size: 15px;
+    font-weight: 600;
+    color: #b8b8c0;
+    padding-bottom: 10px;
+  }
+  .feed-tab.active {
+    color: #1c1c1e;
+    border-bottom: 2px solid #6a5ae0;
+  }
+
+  /* ===== Feed: 2-column masonry grid ===== */
+  .feed-grid {
+    column-count: 2;
+    column-gap: 10px;
+  }
+  .feed-card {
+    break-inside: avoid;
+    margin-bottom: 10px;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+  }
+  .feed-card::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 68%;
+    background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.25) 70%, rgba(0,0,0,0) 100%);
+  }
+  .feed-card-label {
+    position: relative;
+    z-index: 2;
+    padding: 12px;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  }
+  .feed-card-brand {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    opacity: 0.85;
+    text-transform: uppercase;
+  }
+  .feed-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-top: 2px;
+  }
+  .feed-card-clip {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 3;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(60,60,60,0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .feed-card-clip.clip-on-dark {
+    background: rgba(255,255,255,0.28);
+  }
+  .feed-card-clip svg {
+    stroke: #fff;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .feed-card-clip.active svg {
+    transform: rotate(35deg);
+    stroke: url(#clipRainbowGradient);
+  }
+  .feed-card-lock {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 3;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .feed-card-locked .feed-card-label .feed-card-brand {
+    letter-spacing: 0.4px;
+  }
+  .feed-card-locked {
+    isolation: isolate;
+  }
+  .feed-card-locked::before {
+    content: "";
+    position: absolute;
+    inset: -24px;
+    border-radius: 18px;
+    background: inherit;
+    background-position: center;
+    filter: blur(18px) saturate(1.05) brightness(0.9);
+    z-index: 1;
+  }
+  .feed-card-locked .feed-card-lock {
+    z-index: 3;
+  }
+  .feed-card-locked-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 16px;
+    background: rgba(10,10,14,0.28);
+  }
+  .feed-card-locked-title {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.35;
+    letter-spacing: 0.1px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+  .feed-card-locked-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 18px;
+    border-radius: 999px;
+    border: 1.5px solid #fff;
+    background: transparent;
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 400;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .feed-card-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox {
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .lightbox.active {
+    transform: translateY(0);
+  }
+  .lightbox-photo {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background: #000;
+    transition: flex-basis 0.32s cubic-bezier(0.32, 0.72, 0, 1), flex-grow 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .lightbox-photo-canvas {
+    position: absolute;
+    inset: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    z-index: 1;
+    display: none;
+  }
+  .lightbox-photo-canvas.active {
+    display: block;
+  }
+  .lightbox.comments-open .lightbox-photo {
+    flex: 0 0 38%;
+  }
+  .lightbox-close {
+    position: absolute;
+    z-index: 2;
+    top: 16px;
+    left: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .lightbox-comment-toggle {
+    position: absolute;
+    z-index: 2;
+    bottom: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .lightbox.comments-open .lightbox-comment-toggle {
+    display: none;
+  }
+  .lightbox-panel {
+    flex: 0 0 0;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: flex-basis 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .lightbox.comments-open .lightbox-panel {
+    flex: 1 1 62%;
+    margin-top: -20px;
+  }
+  .lightbox-panel-header {
+    padding: 14px 16px 10px;
+    font-size: 14px;
+    font-weight: 700;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .lightbox-panel-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f2f2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .lightbox-comments {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+  .lightbox-comment {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .lightbox-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .lightbox-comment-body {
+    font-size: 13px;
+  }
+  .lightbox-comment-name {
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .lightbox-comment-text {
+    color: #333;
+    line-height: 1.4;
+  }
+  .lightbox-comment-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid #eee;
+  }
+  .lightbox-comment-input {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 18px;
+    padding: 8px 14px;
+    font-size: 13px;
+    outline: none;
+  }
+  .lightbox-comment-send {
+    font-size: 13px;
+    font-weight: 700;
+    color: #999;
+  }
+  .banner-detail-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 65;
+    background: #fff;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .banner-detail-overlay.active {
+    transform: translateY(0);
+  }
+  .banner-detail-topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: #fff;
+    transition: background 0.25s ease, backdrop-filter 0.25s ease;
+  }
+  .banner-detail-topbar.is-scrolled {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .banner-detail-statusbar {
+    height: 50px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 24px 10px 28px;
+  }
+  .banner-detail-navrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 20px;
+  }
+  .banner-detail-navrow .round-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(20,20,22,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    cursor: pointer;
+  }
+  .banner-detail-scroll {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .banner-detail-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .banner-detail-hero-carousel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    margin-top: 124px;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+  .banner-detail-hero-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transform: translateX(0);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+  }
+  .banner-detail-hero-track.dragging {
+    transition: none;
+  }
+  .banner-detail-hero-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    background: #f5f5f7 center / cover no-repeat;
+  }
+  .banner-detail-hero-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 14px;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+  .banner-hero-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .banner-hero-dot.active {
+    background: #fff;
+    transform: scale(1.3);
+  }
+  .banner-detail-body {
+    padding: 20px 20px 40px;
+  }
+  .banner-detail-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1c1c1e;
+    letter-spacing: -0.3px;
+  }
+  .banner-detail-infolist {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .banner-detail-info-row {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #3c3c43;
+  }
+  .banner-detail-info-label {
+    font-weight: 700;
+    color: #1c1c1e;
+  }
+  .banner-detail-divider {
+    height: 1px;
+    background: #ececef;
+    margin: 20px 0;
+  }
+  .banner-detail-section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #8a8a93;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+  }
+  .banner-detail-desc {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: #3c3c43;
+    margin-bottom: 20px;
+  }
+  .banner-detail-cast-row {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #3c3c43;
+  }
+
+  /* ===== Cross-page nav link (Home <-> Updates) ===== */
+  .sheet-title-group {
+    text-decoration: none;
+    color: inherit;
+  }
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;">
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <linearGradient id="clipRainbowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff3b30"/>
+      <stop offset="20%" stop-color="#ff9500"/>
+      <stop offset="40%" stop-color="#ffcc00"/>
+      <stop offset="60%" stop-color="#34c759"/>
+      <stop offset="80%" stop-color="#007aff"/>
+      <stop offset="100%" stop-color="#af52de"/>
+    </linearGradient>
+  </defs>
+
+  <symbol id="icon-menu" viewBox="0 0 18 14"><rect width="18" height="2" rx="1" fill="#1c1c1e"/><rect y="6" width="18" height="2" rx="1" fill="#1c1c1e"/><rect y="12" width="18" height="2" rx="1" fill="#1c1c1e"/></symbol>
+    <symbol id="icon-profile" viewBox="0 0 20 20"><circle cx="10" cy="7.2" r="3.2" stroke="#1c1c1e" stroke-width="1.4"/><path d="M3.5 17c1-3.2 4-4.8 6.5-4.8s5.5 1.6 6.5 4.8" stroke="#1c1c1e" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="icon-chevron-left" viewBox="0 0 20 20"><path d="M12.5 4L6.5 10L12.5 16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-chevron-right" viewBox="0 0 20 20"><path d="M7.5 4L13.5 10L7.5 16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-chevron-up" viewBox="0 0 20 20"><path d="M4 12.5L10 6.5L16 12.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-chevron-down" viewBox="0 0 20 20"><path d="M4 7.5L10 13.5L16 7.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-chevron-down-dark" viewBox="0 0 20 20"><path d="M4 7.5L10 13.5L16 7.5" stroke="#1c1c1e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-globe" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.7" stroke="currentColor" stroke-width="1.4"/><ellipse cx="10" cy="10" rx="3.3" ry="7.7" stroke="currentColor" stroke-width="1.4"/><line x1="2.3" y1="10" x2="17.7" y2="10" stroke="currentColor" stroke-width="1.4"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 20 20"><path d="M4 10.5L8 14.5L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-flag-thailand" viewBox="0 0 20 20"><clipPath id="thFlagClip"><rect x="1" y="4" width="18" height="12" rx="2"/></clipPath><g clip-path="url(#thFlagClip)"><rect x="1" y="4" width="18" height="12" fill="#a51931"/><rect x="1" y="6" width="18" height="8" fill="#f4f5f8"/><rect x="1" y="7.6" width="18" height="4.8" fill="#2d2a4a"/></g></symbol>
+    <symbol id="icon-chev-left-alt" viewBox="0 0 20 20"><path d="M12.5 4.5L6.5 10L12.5 15.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-chev-right-alt" viewBox="0 0 20 20"><path d="M7.5 4.5L13.5 10L7.5 15.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-chev-right-sm" viewBox="0 0 16 16"><path d="M6 3.5L11 8L6 12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 14 14"><path d="M3 1.5L12 7L3 12.5V1.5Z" fill="#fff"/></symbol>
+    <symbol id="icon-reply-arrow" viewBox="0 0 16 12"><path d="M1 6H14M14 6L9 1M14 6L9 11" stroke="#1c1c1e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-mic" viewBox="0 0 16 16"><path d="M4.5 8.5V4.2C4.5 2.4 5.9 1 7.7 1C9.5 1 10.9 2.4 10.9 4.2V10.5C10.9 11.7 9.9 12.7 8.7 12.7C7.5 12.7 6.5 11.7 6.5 10.5V4.8C6.5 4.2 7 3.7 7.6 3.7C8.2 3.7 8.7 4.2 8.7 4.8V9.5" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 16 16"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5" stroke="#fff" stroke-width="1.3"/><path d="M5.5 7V5A2.5 2.5 0 0 1 10.5 5V7" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 16 16"><path d="M2 2L14 14M14 2L2 14" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="icon-chat" viewBox="0 0 24 24"><path d="M4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20C10.6 20 9.28 19.64 8.14 19L4 20L5.14 16.5C4.42 15.24 4 13.67 4 12Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-close-gray" viewBox="0 0 16 16"><path d="M2 2L14 14M14 2L2 14" stroke="#888" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="icon-signal" viewBox="0 0 18 12"><rect x="0" y="7" width="3" height="5" rx="0.8" fill="#1c1c1e"/><rect x="5" y="5" width="3" height="7" rx="0.8" fill="#1c1c1e"/><rect x="10" y="3" width="3" height="9" rx="0.8" fill="#1c1c1e"/><rect x="15" y="0" width="3" height="12" rx="0.8" fill="#1c1c1e"/></symbol>
+    <symbol id="icon-wifi" viewBox="0 0 16 12"><path d="M8 10.2C8.66 10.2 9.2 9.66 9.2 9C9.2 8.34 8.66 7.8 8 7.8C7.34 7.8 6.8 8.34 6.8 9C6.8 9.66 7.34 10.2 8 10.2Z" fill="#1c1c1e"/><path d="M5 6.8C5.75 6.05 6.83 5.6 8 5.6C9.17 5.6 10.25 6.05 11 6.8" stroke="#1c1c1e" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 4C4 2.5 6 1.7 8 1.7C10 1.7 12 2.5 13.5 4" stroke="#1c1c1e" stroke-width="1.3" stroke-linecap="round"/></symbol>
+    <symbol id="icon-battery" viewBox="0 0 26 13"><rect x="0.5" y="0.5" width="21" height="12" rx="3.5" stroke="#1c1c1e" opacity="0.4"/><rect x="2" y="2" width="18" height="9" rx="2" fill="#1c1c1e"/><rect x="23" y="4" width="2" height="5" rx="1" fill="#1c1c1e" opacity="0.4"/></symbol>
+    <symbol id="icon-back-thin" viewBox="0 0 10 16"><path d="M8.5 1L1.5 8L8.5 15" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-globe-white" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.7" stroke="#fff" stroke-width="1.4"/><ellipse cx="10" cy="10" rx="3.3" ry="7.7" stroke="#fff" stroke-width="1.4"/><line x1="2.3" y1="10" x2="17.7" y2="10" stroke="#fff" stroke-width="1.4"/></symbol>
+</svg>
+</svg>
+
+<div class="frame-wrap">
+  <div class="frame-label">iPhone 16 — 393 × 852 (Updates)</div>
+  <div class="device">
+    <div class="screen" id="screenArea">
+
+      <div class="dynamic-island"></div>
+
+      <div class="status-scrim"></div>
+
+      <div class="top-bar">
+        <div class="round-btn">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><use href="#icon-menu"/></svg>
+        </div>
+        <div class="round-btn" id="heroProfileBtn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><use href="#icon-profile"/></svg>
+        </div>
+      </div>
+      <div class="hero" id="heroArea"></div>
+
+      <div class="sheet-nav-btn up" id="sheetNavUp" aria-label="Expand sheet">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><use href="#icon-chevron-up"/></svg>
+      </div>
+      <div class="sheet-nav-btn down" id="sheetNavDown" aria-label="Collapse sheet">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><use href="#icon-chevron-down"/></svg>
+      </div>
+
+      <div class="sheet" id="sheet">
+        <div class="sheet-drag-handle" id="sheetDragHandle">
+          <div class="sheet-handle"></div>
+          <div class="sheet-header">
+            <a class="sheet-title-group" id="sheetTitleGroup" href="ns-v5-home.html">
+              <div class="sheet-title" id="sheetTitle">Updates</div>
+              <div class="sheet-title-chevron" id="sheetTitleChevron">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><use href="#icon-chevron-down-dark"/></svg>
+              </div>
+            </a>
+            <div class="sheet-globe-wrap" id="sheetGlobeWrap">
+              <div class="sheet-globe-btn" id="sheetGlobeBtn">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><use href="#icon-globe"/></svg>
+              </div>
+              <div class="sheet-globe-menu" id="sheetGlobeMenu">
+                <div class="sheet-globe-item active" data-region="global">
+                  <span class="sheet-globe-item-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-globe"/></svg></span>
+                  <span class="sheet-globe-item-label"><span>Global</span><span class="sheet-globe-item-check"><svg width="14" height="14" viewBox="0 0 20 20" fill="none"><use href="#icon-check"/></svg></span></span>
+                </div>
+                <div class="sheet-globe-item" data-region="thailand">
+                  <span class="sheet-globe-item-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-flag-thailand"/></svg></span>
+                  <span class="sheet-globe-item-label"><span>Thailand</span><span class="sheet-globe-item-check"><svg width="14" height="14" viewBox="0 0 20 20" fill="none"><use href="#icon-check"/></svg></span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sheet-scroll" id="sheetScroll">
+        <div class="updates-content" id="updatesContent">
+        <div class="sources-list">
+
+        <div class="pill-scroll-wrap">
+          <div class="h-scroll-nav-btn prev is-disabled" data-hscroll-nav="prev" aria-label="Scroll left">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-left-alt"/></svg>
+          </div>
+          <div class="h-scroll-nav-btn next" data-hscroll-nav="next" aria-label="Scroll right">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-right-alt"/></svg>
+          </div>
+        <div class="pill-row">
+          <div class="pill active"><span>LenaMiu</span></div>
+          <div class="pill"><span>Lena</span></div>
+          <div class="pill"><span>Miu</span></div>
+          <div class="pill"><span>Support</span></div>
+        </div>
+        </div>
+
+        </div>
+
+        <div class="pill-panel active" data-panel="lenamiu">
+
+        <div class="content-banner" style="position:relative;">
+          <div class="content-banner-inner"></div>
+          <div class="banner-more-pill" id="bannerMorePill">
+            <span>More Detail</span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-chev-right-sm"/></svg>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">Latest</div>
+          <div class="h-scroll-wrap">
+          <div class="h-scroll-nav-btn prev is-disabled" data-hscroll-nav="prev" aria-label="Scroll left">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-left-alt"/></svg>
+          </div>
+          <div class="h-scroll-nav-btn next" data-hscroll-nav="next" aria-label="Scroll right">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-right-alt"/></svg>
+          </div>
+          <div class="h-scroll">
+            <div>
+              <div class="h-scroll-item plain">
+                <div class="h-scroll-item-inner" style="background-image:url('https://img.youtube.com/vi/fp3DWGXeTjQ/hqdefault.jpg'); cursor:pointer;" onclick="playLatestVideo(this, 'fp3DWGXeTjQ', 'OFFICIAL TRAILER | Her in Frame')">
+                  <div class="h-scroll-play">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="h-scroll-caption">OFFICIAL TRAILER | Her in Frame</div>
+            </div>
+            <div>
+              <div class="h-scroll-item plain">
+                <div class="h-scroll-item-inner" style="background-image:url('https://img.youtube.com/vi/xuMGEDR5Cgs/hqdefault.jpg'); cursor:pointer;" onclick="playLatestVideo(this, 'xuMGEDR5Cgs', 'Alek\'s Food EP.178 | Thonburi Fresh Market')">
+                  <div class="h-scroll-play">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="h-scroll-caption">Alek's Food EP.178 | Thonburi Fresh Market</div>
+            </div>
+            <div>
+              <div class="h-scroll-item plain">
+                <div class="h-scroll-item-inner" style="background-image:url('https://img.youtube.com/vi/-ncd1m-bwmA/hqdefault.jpg'); cursor:pointer;" onclick="playLatestVideo(this, '-ncd1m-bwmA', 'Time to Talk EP.48 | My Safe Zone')">
+                  <div class="h-scroll-play">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="h-scroll-caption">Time to Talk EP.48 | My Safe Zone</div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">About</div>
+          <div class="about-avatar-list">
+            <div class="about-avatar-card" data-pill-target="lena">
+              <div class="about-avatar avatar-lena"></div>
+              <div class="about-avatar-identity">
+                <div class="about-avatar-name">Lena Lalina</div>
+                <div class="about-avatar-sub">Channel 3</div>
+              </div>
+              <div class="about-avatar-arrow">
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><use href="#icon-reply-arrow"/></svg>
+              </div>
+            </div>
+            <div class="about-avatar-card" data-pill-target="miu">
+              <div class="about-avatar avatar-miu"></div>
+              <div class="about-avatar-identity">
+                <div class="about-avatar-name">Miu Natsha</div>
+                <div class="about-avatar-sub">Channel 3</div>
+              </div>
+              <div class="about-avatar-arrow">
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><use href="#icon-reply-arrow"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">Works</div>
+          <div class="h-scroll-wrap">
+          <div class="h-scroll-nav-btn prev is-disabled" data-hscroll-nav="prev" aria-label="Scroll left">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-left-alt"/></svg>
+          </div>
+          <div class="h-scroll-nav-btn next" data-hscroll-nav="next" aria-label="Scroll right">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-right-alt"/></svg>
+          </div>
+          <div class="h-scroll">
+            <div>
+              <div class="h-scroll-item plain">
+                <div class="h-scroll-item-inner" style="background-image:url('https://img.youtube.com/vi/6b4UnDCGYsI/hqdefault.jpg'); cursor:pointer;" onclick="playLatestVideo(this, '6b4UnDCGYsI', 'Official Pilot | My Safe Zone The Series')">
+                  <div class="h-scroll-play">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="h-scroll-caption">Official Pilot | My Safe Zone The Series</div>
+            </div>
+            <div>
+              <div class="h-scroll-item plain">
+                <div class="h-scroll-item-inner" style="background-image:url('https://img.youtube.com/vi/XheupD-6iK4/hqdefault.jpg'); cursor:pointer;" onclick="playLatestVideo(this, 'XheupD-6iK4', 'Reaction EP.1 | My Safe Zone [ENG SUB]')">
+                  <div class="h-scroll-play">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="h-scroll-caption">Reaction EP.1 | My Safe Zone [ENG SUB]</div>
+            </div>
+            <div>
+              <div class="h-scroll-item plain">
+                <div class="h-scroll-item-inner" style="background-image:url('https://img.youtube.com/vi/GC_Vx210UWw/hqdefault.jpg'); cursor:pointer;" onclick="playLatestVideo(this, 'GC_Vx210UWw', 'Safe Zone Safe 🤍 EP1 : Safe หัวใจที่แหลกสลาย [ENG SUB]')">
+                  <div class="h-scroll-play">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="h-scroll-caption">Safe Zone Safe 🤍 EP1 : Safe หัวใจที่แหลกสลาย [ENG SUB]</div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title-row">
+            <span class="section-title">Timeline</span>
+            <span class="section-title-dot">&middot;</span>
+            <div class="person-toggle-bar" data-person-toggle-bar>
+              <span class="person-toggle-item active" data-person-toggle="lena">Lena</span>
+              <span class="person-toggle-sep">/</span>
+              <span class="person-toggle-item" data-person-toggle="miu">Miu</span>
+            </div>
+          </div>
+          <div class="h-scroll-wrap">
+          <div class="h-scroll-nav-btn prev is-disabled" data-hscroll-nav="prev" aria-label="Scroll left">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-left-alt"/></svg>
+          </div>
+          <div class="h-scroll-nav-btn next" data-hscroll-nav="next" aria-label="Scroll right">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><use href="#icon-chev-right-alt"/></svg>
+          </div>
+          <div class="h-scroll" id="timelineTrack"></div>
+          </div>
+        </div>
+
+        </div>
+
+        <div class="pill-panel" data-panel="lena">
+          <div class="lena-post-card">
+            <div class="content-banner lena-banner">
+              <div class="content-banner-inner" style="background-image:url('banner-ln.png')"></div>
+            </div>
+            <div class="lena-post-footer">
+              <div class="lena-post-header">
+                <div class="lena-post-identity">
+                  <div class="lena-name-sub">Lena Lalina Schuett</div>
+                </div>
+                <div class="pill lena-join-pill"><span>Join</span></div>
+              </div>
+              <div class="lena-post-caption">"Lena" Lalina or Lorena Schuett / ลีน่า ลลินา ชูเอ็ทท์ is a Thai-Canadian actor born in November 25, 1999 in Chiang Mai, Thailand. She's been signed with Channel 3 (ช่อง 3) since 2016.</div>
+            </div>
+          </div>
+
+          <div class="sort-toggle-bar">
+            <span class="sort-toggle-item active" data-sort-toggle="latest">Latest</span>
+            <span class="sort-toggle-sep">/</span>
+            <span class="sort-toggle-item" data-sort-toggle="popular">Popular</span>
+            <span class="sort-toggle-label">Posts</span>
+          </div>
+
+          <div class="feed-grid" style="margin-top:16px;">
+
+              <div class="feed-card" id="cardGoldenHour" style="height:280px; background:#d9d9de url('grid-ln6.png') center/cover no-repeat; cursor:pointer;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">27 Jul</div>
+                  <div class="feed-card-title">Golden hour after practice 🌇</div>
+                </div>
+              </div>
+
+              <div class="feed-card feed-card-locked" style="height:220px; background:#d9d9de url(https://picsum.photos/seed/nqnq21/500/500) center/cover;">
+                <div class="feed-card-lock">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><use href="#icon-lock"/></svg>
+                </div>
+                <div class="feed-card-locked-overlay">
+                  <div class="feed-card-locked-title">Upgrade to unlock this content</div>
+                  <div class="feed-card-locked-pill">Subscribe</div>
+                </div>
+              </div>
+
+              <div class="feed-card" style="height:200px; background:#d9d9de; cursor:pointer;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-play">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">22 Jul</div>
+                  <div class="feed-card-title">Dance practice sneak peek</div>
+                </div>
+              </div>
+
+              <div class="feed-card" style="height:300px; background:#d9d9de;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">25 Jul</div>
+                  <div class="feed-card-title">Cafe run before rehearsal ☕</div>
+                </div>
+              </div>
+
+              <div class="feed-card feed-card-locked" style="height:190px; background:#d9d9de url(https://picsum.photos/seed/nqnq22/500/430) center/cover;">
+                <div class="feed-card-lock">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><use href="#icon-lock"/></svg>
+                </div>
+                <div class="feed-card-locked-overlay">
+                  <div class="feed-card-locked-title">Upgrade to unlock this content</div>
+                  <div class="feed-card-locked-pill">Subscribe</div>
+                </div>
+              </div>
+
+              <div class="feed-card" style="height:240px; background:#d9d9de; cursor:pointer;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-play">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">15 Jul</div>
+                  <div class="feed-card-title">Q&A live moment</div>
+                </div>
+              </div>
+
+            </div>
+        </div>
+
+        <div class="pill-panel" data-panel="miu">
+          <div class="lena-post-card">
+            <div class="content-banner lena-banner">
+              <div class="content-banner-inner" style="background-image:url('banner-miu.png')"></div>
+            </div>
+            <div class="lena-post-footer">
+              <div class="lena-post-header">
+                <div class="lena-post-identity">
+                  <div class="lena-name-sub">Miu Natsha T.</div>
+                </div>
+                <div class="pill lena-join-pill"><span>Join</span></div>
+              </div>
+              <div class="lena-post-caption">"Miu" Natsha Taechamongkalapiwat / ณัชชา เตชะมวคลาภิวัฒน์ is a Thai-Chinese Australian actor born in November 25, 2001 in Bangkok, Thailand.</div>
+            </div>
+          </div>
+
+          <div class="sort-toggle-bar">
+            <span class="sort-toggle-item active" data-sort-toggle="latest">Latest</span>
+            <span class="sort-toggle-sep">/</span>
+            <span class="sort-toggle-item" data-sort-toggle="popular">Popular</span>
+            <span class="sort-toggle-label">Posts</span>
+          </div>
+
+          <div class="feed-grid" style="margin-top:16px;">
+
+              <div class="feed-card" style="height:240px; background:#d9d9de; cursor:pointer;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-play">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">26 Jul</div>
+                  <div class="feed-card-title">Airport look on arrival ✈️</div>
+                </div>
+              </div>
+
+              <div class="feed-card feed-card-locked" style="height:300px; background:#d9d9de url(https://picsum.photos/seed/nqnq23/500/680) center/cover;">
+                <div class="feed-card-lock">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><use href="#icon-lock"/></svg>
+                </div>
+                <div class="feed-card-locked-overlay">
+                  <div class="feed-card-locked-title">Upgrade to unlock this content</div>
+                  <div class="feed-card-locked-pill">Subscribe</div>
+                </div>
+              </div>
+
+              <div class="feed-card" style="height:190px; background:#d9d9de;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">24 Jul</div>
+                  <div class="feed-card-title">Coffee break candid</div>
+                </div>
+              </div>
+
+              <div class="feed-card" style="height:260px; background:#d9d9de;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">21 Jul</div>
+                  <div class="feed-card-title">Studio shoot preview</div>
+                </div>
+              </div>
+
+              <div class="feed-card" style="height:220px; background:#d9d9de; cursor:pointer;">
+                <div class="feed-card-clip">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-mic"/></svg>
+                </div>
+                <div class="feed-card-play">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><use href="#icon-play"/></svg>
+                </div>
+                <div class="feed-card-label">
+                  <div class="feed-card-brand">18 Jul</div>
+                  <div class="feed-card-title">Fan meet highlight clip</div>
+                </div>
+              </div>
+
+              <div class="feed-card feed-card-locked" style="height:210px; background:#d9d9de url(https://picsum.photos/seed/nqnq24/500/470) center/cover;">
+                <div class="feed-card-lock">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><use href="#icon-lock"/></svg>
+                </div>
+                <div class="feed-card-locked-overlay">
+                  <div class="feed-card-locked-title">Upgrade to unlock this content</div>
+                  <div class="feed-card-locked-pill">Subscribe</div>
+                </div>
+              </div>
+
+            </div>
+        </div>
+
+        <div class="pill-panel" data-panel="support">
+          <div class="pill-panel-empty">Belum ada konten</div>
+        </div>
+        </div>
+        </div>
+      </div>
+
+      <div class="lightbox" id="lightbox">
+        <div class="lightbox-photo" id="lightboxPhoto">
+          <canvas class="lightbox-photo-canvas" id="lightboxPhotoCanvas"></canvas>
+          <div class="lightbox-close" id="lightboxClose">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><use href="#icon-close"/></svg>
+          </div>
+          <div class="lightbox-comment-toggle" id="lightboxCommentToggle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><use href="#icon-chat"/></svg>
+          </div>
+        </div>
+        <div class="lightbox-panel" id="lightboxPanel">
+          <div class="lightbox-panel-header">
+            <span>Comments</span>
+            <div class="lightbox-panel-close" id="lightboxPanelClose">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><use href="#icon-close-gray"/></svg>
+            </div>
+          </div>
+          <div class="lightbox-comments">
+            <div class="lightbox-comment">
+              <div class="lightbox-comment-avatar" style="background:#e8a87c;"></div>
+              <div class="lightbox-comment-body">
+                <div class="lightbox-comment-name">jelly.bee</div>
+                <div class="lightbox-comment-text">the lighting here is unreal 😍</div>
+              </div>
+            </div>
+            <div class="lightbox-comment">
+              <div class="lightbox-comment-avatar" style="background:#7ea8c9;"></div>
+              <div class="lightbox-comment-body">
+                <div class="lightbox-comment-name">softserve.k</div>
+                <div class="lightbox-comment-text">golden hour queen fr</div>
+              </div>
+            </div>
+            <div class="lightbox-comment">
+              <div class="lightbox-comment-avatar" style="background:#c98ab0;"></div>
+              <div class="lightbox-comment-body">
+                <div class="lightbox-comment-name">minttea_</div>
+                <div class="lightbox-comment-text">saving this as my wallpaper ngl</div>
+              </div>
+            </div>
+          </div>
+          <div class="lightbox-comment-input-row">
+            <input class="lightbox-comment-input" type="text" placeholder="Add a comment...">
+            <div class="lightbox-comment-send">Post</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="banner-detail-overlay" id="bannerDetailOverlay">
+        <div class="banner-detail-topbar" id="bannerDetailTopbar">
+          <div class="banner-detail-statusbar">
+            <div class="status-time">9:41</div>
+            <div class="status-icons">
+              <!-- signal -->
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><use href="#icon-signal"/></svg>
+              <!-- wifi -->
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><use href="#icon-wifi"/></svg>
+              <!-- battery -->
+              <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><use href="#icon-battery"/></svg>
+            </div>
+          </div>
+          <div class="banner-detail-navrow">
+            <div class="round-btn" id="bannerDetailClose">
+              <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><use href="#icon-back-thin"/></svg>
+            </div>
+            <div class="round-btn" id="bannerDetailGlobe">
+              <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><use href="#icon-globe-white"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="banner-detail-scroll">
+          <div class="banner-detail-hero-carousel" id="bannerHeroCarousel">
+            <div class="banner-detail-hero-track" id="bannerHeroTrack">
+              <div class="banner-detail-hero-slide" style="background-image:url('banner1.png')"></div>
+              <div class="banner-detail-hero-slide" style="background-image:url('banner2.png')"></div>
+              <div class="banner-detail-hero-slide" style="background-image:url('banner3.png')"></div>
+            </div>
+            <div class="carousel-nav-btn prev is-disabled" id="bannerHeroPrev" aria-label="Previous banner">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><use href="#icon-chevron-left"/></svg>
+            </div>
+            <div class="carousel-nav-btn next" id="bannerHeroNext" aria-label="Next banner">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><use href="#icon-chevron-right"/></svg>
+            </div>
+            <div class="banner-detail-hero-dots" id="bannerHeroDots">
+              <div class="banner-hero-dot active"></div>
+              <div class="banner-hero-dot"></div>
+              <div class="banner-hero-dot"></div>
+            </div>
+          </div>
+          <div class="banner-detail-body">
+            <div class="banner-detail-title">Her Frame</div>
+            <div class="banner-detail-infolist">
+              <div class="banner-detail-info-row"><span class="banner-detail-info-label">Native Title:</span> เธอในภาพนั้น</div>
+              <div class="banner-detail-info-row"><span class="banner-detail-info-label">Also Known As:</span> Thoe Nai Phap Nan</div>
+              <div class="banner-detail-info-row"><span class="banner-detail-info-label">Director:</span> Koo Ekkasit Trakulkasemsuk</div>
+              <div class="banner-detail-info-row"><span class="banner-detail-info-label">Genres:</span> Romance, Drama</div>
+            </div>
+            <div class="banner-detail-divider"></div>
+            <div class="banner-detail-section-label">Synopsis</div>
+            <div class="banner-detail-desc">เธอในภาพนั้น เป็นเรื่องราวที่เล่าถึง มินตรา ภัณฑารักษ์สาวในพิพิธภัณฑ์ผ้าไทย และ ตะวัน ช่างภาพหนุ่ม ทั้งคู่เริ่มต้นความสัมพันธ์จากภาพถ่ายปริศนาในกล้องฟิล์มเก่า และสิ่งนั้นได้นำพาให้พวกเขาออกเดินทางตามหาความจริงบางอย่างจากกรุงเทพฯ สู่เขื่อนสิริกิติ์ จังหวัดอุตรดิตถ์ โดยเหตุการณ์ต่างๆ จะนำพาไปค้นพบเรื่องราวแห่งความประทับใจ เตรียมพบกับเรื่องราวของ ความรัก ความทรงจำ และพรหมลิขิต ผ่านภาพถ่ายที่เชื่อมโยงอดีตและปัจจุบันเข้าด้วยกัน เร็วๆ นี้</div>
+            <div class="banner-detail-section-label">Cast</div>
+            <div class="banner-detail-cast-row">"Tor" Thanapob Leeratanakachorn / ธนภพ ลีรัตนขจร</div>
+            <div class="banner-detail-cast-row">"Lena" Lalina or Lorena Schuett / ลีน่า ลลินา ชูเอ็ทท์</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const sheet = document.getElementById('sheet');
+  const dragHandle = document.getElementById('sheetDragHandle');
+  const globeBtn = document.getElementById('sheetGlobeBtn');
+  const globeMenu = document.getElementById('sheetGlobeMenu');
+  const sheetTitle = document.getElementById('sheetTitle');
+  const sheetScroll = document.getElementById('sheetScroll');
+
+  const PARTIAL_HEIGHT = 460; // px, matches CSS default
+  const DEVICE_HEIGHT = 852;  // px, inner screen height reference
+  const FULL_OFFSET = 0;
+  const PARTIAL_OFFSET = DEVICE_HEIGHT - PARTIAL_HEIGHT; // 392
+  const CLOSED_OFFSET = DEVICE_HEIGHT; // fully off-screen
+
+  let startY = 0;
+  let startOffset = PARTIAL_OFFSET;
+  let currentOffset = PARTIAL_OFFSET;
+  let dragging = false;
+  let state = 'partial'; // 'full' | 'partial' | 'closed'
+  let rafId = null;
+
+  function applyTransform() {
+    sheet.style.transform = 'translateY(' + currentOffset + 'px)';
+    updateSheetScrollHeight();
+    rafId = null;
+  }
+
+  function setOffset(px) {
+    currentOffset = Math.max(FULL_OFFSET, Math.min(CLOSED_OFFSET, px));
+    if (rafId === null) {
+      rafId = requestAnimationFrame(applyTransform);
+    }
+  }
+
+  function offsetForState(s) {
+    if (s === 'full') return FULL_OFFSET;
+    if (s === 'partial') return PARTIAL_OFFSET;
+    return CLOSED_OFFSET;
+  }
+
+  function updateSheetScrollHeight() {
+    const headerH = dragHandle.offsetHeight;
+    const visible = DEVICE_HEIGHT - currentOffset;
+    const maxH = Math.max(0, visible - headerH);
+    sheetScroll.style.maxHeight = maxH + 'px';
+  }
+
+  function goTo(s) {
+    state = s;
+    sheet.classList.remove('dragging');
+    sheet.classList.toggle('full', s === 'full');
+    currentOffset = offsetForState(s);
+    sheet.style.transform = 'translateY(' + currentOffset + 'px)';
+    updateSheetScrollHeight();
+    if (typeof updateSheetNavButtons === 'function') updateSheetNavButtons();
+  }
+
+  function snapOpen() { goTo('full'); }
+  function snapPartial() { goTo('partial'); }
+  function snapClosed() { goTo('closed'); }
+
+  function onDragStart(clientY) {
+    dragging = true;
+    startY = clientY;
+    startOffset = offsetForState(state);
+    currentOffset = startOffset;
+    sheet.classList.add('dragging');
+    sheet.classList.remove('full');
+  }
+
+  function onDragMove(clientY, evt) {
+    if (!dragging) return;
+    if (evt && evt.cancelable) evt.preventDefault();
+    const delta = clientY - startY; // dragging down = positive offset
+    setOffset(startOffset + delta);
+  }
+
+  function onDragEnd() {
+    if (!dragging) return;
+    dragging = false;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    // 3-way snap based on nearest state
+    const midFullPartial = (FULL_OFFSET + PARTIAL_OFFSET) / 2;
+    const midPartialClosed = (PARTIAL_OFFSET + CLOSED_OFFSET) / 2;
+    if (currentOffset < midFullPartial) {
+      snapOpen();
+    } else if (currentOffset < midPartialClosed) {
+      snapPartial();
+    } else {
+      snapClosed();
+    }
+  }
+
+  // Touch events (bound to document so drag can start from the handle OR the plain hero backdrop)
+  dragHandle.addEventListener('touchstart', (e) => {
+    if (e.target.closest('#sheetTitleGroup') || e.target.closest('#sheetGlobeWrap')) return;
+    onDragStart(e.touches[0].clientY);
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => onDragMove(e.touches[0].clientY, e), { passive: false });
+  document.addEventListener('touchend', onDragEnd);
+
+  // Mouse events (for desktop/Figma-preview testing)
+  dragHandle.addEventListener('mousedown', (e) => {
+    if (e.target.closest('#sheetTitleGroup') || e.target.closest('#sheetGlobeWrap')) return;
+    onDragStart(e.clientY);
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => onDragMove(e.clientY));
+  window.addEventListener('mouseup', onDragEnd);
+
+  const screenArea = document.getElementById('screenArea');
+
+  // h-scroll chevron nav (desktop/mouse only) — scrolls the row by ~one
+  // viewport's worth per click, and hides prev/next at the scroll ends.
+  // No-ops safely on pages that don't have any .h-scroll-wrap/.pill-scroll-wrap.
+  document.querySelectorAll('.h-scroll-wrap, .pill-scroll-wrap').forEach((wrap) => {
+    const track = wrap.querySelector('.h-scroll, .pill-row');
+    const prevBtn = wrap.querySelector('[data-hscroll-nav="prev"]');
+    const nextBtn = wrap.querySelector('[data-hscroll-nav="next"]');
+    if (!track || !prevBtn || !nextBtn) return;
+
+    function updateHScrollNav() {
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      prevBtn.classList.toggle('is-disabled', track.scrollLeft <= 2);
+      nextBtn.classList.toggle('is-disabled', track.scrollLeft >= maxScroll - 2);
+    }
+
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      track.scrollBy({ left: -track.clientWidth * 0.8, behavior: 'smooth' });
+    });
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      track.scrollBy({ left: track.clientWidth * 0.8, behavior: 'smooth' });
+    });
+    track.addEventListener('scroll', updateHScrollNav);
+    window.addEventListener('resize', updateHScrollNav);
+    updateHScrollNav();
+  });
+
+  // When the sheet is fully closed, tapping/swiping up anywhere on the plain
+  // backdrop brings it back. Touches that start inside the sheet itself are
+  // ignored here entirely, so the sheet's own scrolling/pill-row/handle keep
+  // working untouched.
+  let pendingStartY = null;
+  let pendingStartX = null;
+  let directionLocked = false;
+  let pendingTapTarget = null;
+
+  function pendingStart(clientX, clientY, target) {
+    if (target && target.closest && target.closest('#sheet')) {
+      pendingStartY = null;
+      pendingTapTarget = null;
+      return;
+    }
+    pendingStartX = clientX;
+    pendingStartY = clientY;
+    directionLocked = false;
+    pendingTapTarget = target;
+  }
+  function pendingMove(clientX, clientY, evt) {
+    if (pendingStartY === null) return;
+    if (dragging) { onDragMove(clientY, evt); return; }
+    const dx = clientX - pendingStartX;
+    const dy = clientY - pendingStartY;
+    if (!directionLocked) {
+      if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return; // not enough movement yet
+      directionLocked = true;
+      if (Math.abs(dy) > Math.abs(dx) && state === 'closed') {
+        onDragStart(pendingStartY);
+        onDragMove(clientY, evt);
+      }
+    }
+  }
+  function pendingEnd() {
+    const wasTap = !directionLocked && pendingTapTarget &&
+      !pendingTapTarget.closest('.round-btn, .carousel-nav-btn, .sheet-nav-btn, .h-scroll-nav-btn, .pill, .feed-card-clip, .sheet-globe-wrap, .banner-more-pill, .banner-detail-overlay, .banner-detail-hero-carousel');
+    if (wasTap && state === 'closed') {
+      snapPartial();
+    }
+    pendingStartY = null;
+    pendingStartX = null;
+    directionLocked = false;
+    pendingTapTarget = null;
+  }
+
+  screenArea.addEventListener('touchstart', (e) => pendingStart(e.touches[0].clientX, e.touches[0].clientY, e.target), { passive: true });
+  screenArea.addEventListener('touchmove', (e) => pendingMove(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false });
+  screenArea.addEventListener('touchend', pendingEnd);
+  screenArea.addEventListener('mousedown', (e) => pendingStart(e.clientX, e.clientY, e.target));
+  window.addEventListener('mousemove', (e) => pendingMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', pendingEnd);
+
+
+  function playLatestVideo(el, videoId, videoTitle) {
+    const wrap = el.closest('.h-scroll-item');
+    if (wrap) wrap.classList.add('playing');
+    el.outerHTML = '<iframe src="https://www.youtube.com/embed/' + videoId + '?autoplay=1" title="' + videoTitle + '" width="100%" height="100%" style="border:none; display:block;" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+  }
+
+  const TIMELINE_DATA = {
+    lena: [
+      { gradient: 'linear-gradient(135deg,#ffd3c9,#ff9a8b)', year: '2016', label: 'Debut — Signed with Channel 3' },
+      { gradient: 'linear-gradient(135deg,#c9d9ff,#a0b8f5)', year: '2018', label: 'First Lead Role' },
+      { gradient: 'linear-gradient(135deg,#ffe3a3,#ffb648)', year: '2020', label: 'Breakthrough Drama' },
+      { gradient: 'linear-gradient(135deg,#b6f0d1,#4fd39a)', year: '2023', label: 'Best Actress Nomination' },
+      { gradient: 'linear-gradient(135deg,#e3c9ff,#b98af0)', year: '2025', label: 'International Debut' },
+    ],
+    miu: [
+      { gradient: 'linear-gradient(135deg,#ffd6e8,#ff9ac6)', year: '2019', label: 'Debut — First Commercial' },
+      { gradient: 'linear-gradient(135deg,#cdeaff,#8ac8f5)', year: '2020', label: 'First Supporting Role' },
+      { gradient: 'linear-gradient(135deg,#fff0b3,#ffd166)', year: '2022', label: 'First Lead Role' },
+      { gradient: 'linear-gradient(135deg,#c6f5db,#4fd39a)', year: '2024', label: 'Rising Star Award' },
+      { gradient: 'linear-gradient(135deg,#e6d6ff,#b98af0)', year: '2025', label: 'International Debut' },
+    ],
+  };
+
+  function renderTimeline(key) {
+    const track = document.getElementById('timelineTrack');
+    if (!track) return;
+    track.innerHTML = TIMELINE_DATA[key].map((item) =>
+      '<div class="timeline-item">' +
+        '<div class="timeline-photo" style="background:' + item.gradient + ';"></div>' +
+        '<div class="timeline-meta">' +
+          '<span class="timeline-year">' + item.year + '</span>' +
+          '<span class="timeline-dot">&middot;</span>' +
+          '<span class="timeline-label">' + item.label + '</span>' +
+        '</div>' +
+      '</div>'
+    ).join('');
+    track.scrollLeft = 0;
+    track.dispatchEvent(new Event('scroll'));
+  }
+  renderTimeline('lena');
+
+  document.querySelectorAll('[data-person-toggle-bar]').forEach((bar) => {
+    bar.querySelectorAll('[data-person-toggle]').forEach((item) => {
+      item.addEventListener('click', () => {
+        bar.querySelectorAll('[data-person-toggle]').forEach((el) => el.classList.remove('active'));
+        item.classList.add('active');
+        renderTimeline(item.dataset.personToggle);
+      });
+    });
+  });
+
+  const pillPanelKeys = ['lenamiu', 'lena', 'miu', 'support'];
+  function activatePillPanel(key) {
+    document.querySelectorAll('.pill-row').forEach((row) => {
+      row.querySelectorAll('.pill').forEach((p, idx) => {
+        p.classList.toggle('active', pillPanelKeys[idx] === key);
+      });
+    });
+    document.querySelectorAll('.pill-panel').forEach((panel) => {
+      panel.classList.toggle('active', panel.dataset.panel === key);
+    });
+  }
+  document.querySelectorAll('.pill-row').forEach((row) => {
+    row.querySelectorAll('.pill').forEach((pill, idx) => {
+      pill.addEventListener('click', () => activatePillPanel(pillPanelKeys[idx]));
+    });
+  });
+  document.querySelectorAll('.about-avatar-card').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = card.dataset.pillTarget;
+      if (key) activatePillPanel(key);
+    });
+  });
+  document.querySelectorAll('.sort-toggle-bar').forEach((bar) => {
+    bar.querySelectorAll('.sort-toggle-item').forEach((item) => {
+      item.addEventListener('click', () => {
+        bar.querySelectorAll('.sort-toggle-item').forEach((el) => el.classList.remove('active'));
+        item.classList.add('active');
+        item.classList.remove('tap-lift');
+        void item.offsetWidth; // restart animation even if clicked repeatedly
+        item.classList.add('tap-lift');
+      });
+      item.addEventListener('animationend', () => item.classList.remove('tap-lift'));
+    });
+  });
+
+  // Fallback: read the hex swatch in the inline style (used when there's no
+  // photo yet, or the photo fails to load).
+  function getCardFallbackLuminance(card) {
+    const bg = (card && card.getAttribute('style')) || '';
+    const hexMatches = bg.match(/#([0-9a-fA-F]{6})/g) || [];
+    if (!hexMatches.length) return 1;
+    let total = 0;
+    hexMatches.forEach((hex) => {
+      const r = parseInt(hex.substr(1, 2), 16);
+      const g = parseInt(hex.substr(3, 2), 16);
+      const b = parseInt(hex.substr(5, 2), 16);
+      total += (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    });
+    return total / hexMatches.length;
+  }
+
+  function extractCardImageUrl(card) {
+    const bg = (card && card.getAttribute('style')) || '';
+    const m = bg.match(/url\(['"]?([^'")]+)['"]?\)/);
+    return m ? m[1] : null;
+  }
+
+  // Universal for every grid: if a card has an actual photo, sample its real
+  // pixels (small canvas, cheap) to get true luminance. If there's no photo,
+  // or it fails to load (e.g. broken/placeholder path), fall back to the
+  // hex swatch behind it.
+  function samplePhotoLuminance(url, callback) {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = 12; c.height = 12;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, 12, 12);
+        const data = ctx.getImageData(0, 0, 12, 12).data;
+        let total = 0, count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          total += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
+          count++;
+        }
+        callback(total / count);
+      } catch (err) {
+        callback(null); // canvas tainted (cross-origin) — fall back to hex swatch
+      }
+    };
+    img.onerror = () => callback(null);
+    img.src = url;
+  }
+
+  document.querySelectorAll('.feed-card-clip').forEach((clip) => {
+    const card = clip.closest('.feed-card');
+    const applyLuminance = (lum) => clip.classList.toggle('clip-on-dark', lum < 0.45);
+    const imgUrl = extractCardImageUrl(card);
+    if (imgUrl) {
+      applyLuminance(getCardFallbackLuminance(card)); // instant guess while photo loads
+      samplePhotoLuminance(imgUrl, (lum) => {
+        if (lum !== null) applyLuminance(lum);
+      });
+    } else {
+      applyLuminance(getCardFallbackLuminance(card));
+    }
+    clip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clip.classList.toggle('active');
+    });
+  });
+
+  // Comments lightbox — only present on pages that include feed-post detail
+  // triggers (e.g. the golden-hour card inside Updates > Lena panel).
+  const lightbox = document.getElementById('lightbox');
+  if (lightbox) {
+    const lightboxClose = document.getElementById('lightboxClose');
+    const lightboxCommentToggle = document.getElementById('lightboxCommentToggle');
+    const lightboxPanelClose = document.getElementById('lightboxPanelClose');
+    const cardGoldenHour = document.getElementById('cardGoldenHour');
+    const lightboxPhoto = document.getElementById('lightboxPhoto');
+    const lightboxPhotoCanvas = document.getElementById('lightboxPhotoCanvas');
+
+    var renderLightboxPhoto = function (src) {
+      if (!lightboxPhotoCanvas || !lightboxPhoto) return;
+      const img = new Image();
+      img.onload = () => {
+        const cw = (lightboxPhoto.clientWidth || 390) + 4;
+        const ch = (lightboxPhoto.clientHeight || 700) + 4;
+        const dpr = window.devicePixelRatio || 1;
+        lightboxPhotoCanvas.width = cw * dpr;
+        lightboxPhotoCanvas.height = ch * dpr;
+        lightboxPhotoCanvas.style.width = cw + 'px';
+        lightboxPhotoCanvas.style.height = ch + 'px';
+        const ctx = lightboxPhotoCanvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cw, ch);
+
+        // Blurred, darkened full-bleed backdrop (cover, overscanned)
+        ctx.save();
+        ctx.filter = 'blur(34px) brightness(0.6) saturate(1.05)';
+        const coverScale = Math.max(cw / img.width, ch / img.height) * 1.25;
+        const bw = img.width * coverScale, bh = img.height * coverScale;
+        ctx.drawImage(img, (cw - bw) / 2, (ch - bh) / 2, bw, bh);
+        ctx.restore();
+
+        // Sharp, un-cropped photo on top (contain)
+        const containScale = Math.min(cw / img.width, ch / img.height);
+        const sw = img.width * containScale, sh = img.height * containScale;
+        ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+
+        lightboxPhotoCanvas.classList.add('active');
+      };
+      img.src = src;
+    };
+
+    if (cardGoldenHour) {
+      cardGoldenHour.addEventListener('click', () => {
+        renderLightboxPhoto('grid-ln6.png');
+        lightbox.classList.remove('comments-open');
+        lightbox.classList.add('active');
+      });
+    }
+    if (lightboxClose) {
+      lightboxClose.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lightbox.classList.remove('active');
+        lightbox.classList.remove('comments-open');
+      });
+    }
+    if (lightboxCommentToggle) {
+      lightboxCommentToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lightbox.classList.add('comments-open');
+      });
+    }
+    if (lightboxPanelClose) {
+      lightboxPanelClose.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lightbox.classList.remove('comments-open');
+      });
+    }
+  }
+
+  globeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    globeMenu.classList.toggle('open');
+  });
+  document.querySelectorAll('.sheet-globe-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.sheet-globe-item').forEach((i) => i.classList.remove('active'));
+      item.classList.add('active');
+      globeBtn.classList.toggle('is-selected', item.dataset.region !== 'global');
+      globeMenu.classList.remove('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.sheet-globe-wrap')) {
+      globeMenu.classList.remove('open');
+    }
+  });
+
+  // Desktop-only chevron buttons: just an extra way to move between the same
+  // three sheet states (closed -> partial -> full). Swipe/drag is unchanged.
+  const sheetNavUp = document.getElementById('sheetNavUp');
+  const sheetNavDown = document.getElementById('sheetNavDown');
+  const SHEET_STATES = ['closed', 'partial', 'full'];
+
+  function updateSheetNavButtons() {
+    const idx = SHEET_STATES.indexOf(state);
+    sheetNavUp.classList.toggle('is-disabled', idx >= SHEET_STATES.length - 1);
+    sheetNavDown.classList.toggle('is-disabled', idx <= 0);
+  }
+
+  sheetNavUp.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const idx = SHEET_STATES.indexOf(state);
+    if (idx < SHEET_STATES.length - 1) goTo(SHEET_STATES[idx + 1]);
+    updateSheetNavButtons();
+  });
+  sheetNavDown.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const idx = SHEET_STATES.indexOf(state);
+    if (idx > 0) goTo(SHEET_STATES[idx - 1]);
+    updateSheetNavButtons();
+  });
+
+  updateSheetNavButtons();
+  updateSheetScrollHeight();
+
+  // Banner "More Detail" overlay — only present on pages that include a
+  // banner-more-pill trigger (e.g. Updates > LenaMiu panel).
+  const bannerMorePill = document.getElementById('bannerMorePill');
+  const bannerDetailOverlay = document.getElementById('bannerDetailOverlay');
+  const bannerDetailClose = document.getElementById('bannerDetailClose');
+  if (bannerMorePill && bannerDetailOverlay) {
+    bannerMorePill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bannerDetailOverlay.classList.add('active');
+    });
+  }
+  if (bannerDetailClose && bannerDetailOverlay) {
+    bannerDetailClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bannerDetailOverlay.classList.remove('active');
+    });
+  }
+
+  // Banner detail hero: swipeable banner1/banner2/banner3 carousel.
+  // Self-contained drag handling (stops propagation so it never fights
+  // with the sheet-drag listeners on screenArea).
+  const bannerHeroCarousel = document.getElementById('bannerHeroCarousel');
+  const bannerHeroTrack = document.getElementById('bannerHeroTrack');
+  const bannerHeroDots = bannerHeroCarousel ? bannerHeroCarousel.parentElement.querySelectorAll('.banner-hero-dot') : null;
+  const bannerHeroPrev = document.getElementById('bannerHeroPrev');
+  const bannerHeroNext = document.getElementById('bannerHeroNext');
+  if (bannerHeroCarousel && bannerHeroTrack && bannerHeroDots) {
+    const BANNER_SLIDE_COUNT = bannerHeroDots.length;
+    let bannerSlide = 0;
+    let bannerDragging = false;
+    let bannerDirLocked = false;
+    let bannerHorizontal = false;
+    let bannerStartX = 0;
+    let bannerStartY = 0;
+    let bannerStartPercent = 0;
+    let bannerCurrentPercent = 0;
+    let bannerDragWidth = 1;
+
+    function updateBannerDots() {
+      bannerHeroDots.forEach((dot, i) => dot.classList.toggle('active', i === bannerSlide));
+    }
+    function updateBannerNavButtons() {
+      if (bannerHeroPrev) bannerHeroPrev.classList.toggle('is-disabled', bannerSlide <= 0);
+      if (bannerHeroNext) bannerHeroNext.classList.toggle('is-disabled', bannerSlide >= BANNER_SLIDE_COUNT - 1);
+    }
+    function goToBannerSlide(idx) {
+      bannerSlide = Math.max(0, Math.min(BANNER_SLIDE_COUNT - 1, idx));
+      bannerHeroTrack.style.transform = 'translateX(' + (-bannerSlide * 100) + '%)';
+      updateBannerDots();
+      updateBannerNavButtons();
+    }
+    function bannerDragStart(x, y) {
+      bannerDragging = true;
+      bannerDirLocked = false;
+      bannerHorizontal = false;
+      bannerStartX = x;
+      bannerStartY = y;
+      bannerStartPercent = -bannerSlide * 100;
+      bannerCurrentPercent = bannerStartPercent;
+      bannerDragWidth = bannerHeroCarousel.clientWidth || 1;
+    }
+    function bannerDragMove(x, y, evt) {
+      if (!bannerDragging) return;
+      const dx = x - bannerStartX;
+      const dy = y - bannerStartY;
+      if (!bannerDirLocked) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        bannerDirLocked = true;
+        bannerHorizontal = Math.abs(dx) > Math.abs(dy);
+        if (bannerHorizontal) bannerHeroTrack.classList.add('dragging');
+      }
+      if (bannerHorizontal) {
+        if (evt && evt.cancelable) evt.preventDefault();
+        const deltaPercent = (dx / bannerDragWidth) * 100;
+        bannerCurrentPercent = Math.max(-(BANNER_SLIDE_COUNT - 1) * 100, Math.min(0, bannerStartPercent + deltaPercent));
+        bannerHeroTrack.style.transform = 'translateX(' + bannerCurrentPercent + '%)';
+      }
+    }
+    function bannerDragEnd() {
+      if (!bannerDragging) return;
+      bannerDragging = false;
+      bannerHeroTrack.classList.remove('dragging');
+      if (bannerHorizontal) {
+        const deltaSlide = Math.round((bannerStartPercent - bannerCurrentPercent) / 100);
+        goToBannerSlide(bannerSlide + deltaSlide);
+      }
+      bannerDirLocked = false;
+      bannerHorizontal = false;
+    }
+
+    bannerHeroCarousel.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.carousel-nav-btn')) return;
+      e.stopPropagation();
+      bannerDragStart(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    bannerHeroCarousel.addEventListener('touchmove', (e) => {
+      e.stopPropagation();
+      bannerDragMove(e.touches[0].clientX, e.touches[0].clientY, e);
+    }, { passive: false });
+    bannerHeroCarousel.addEventListener('touchend', (e) => {
+      e.stopPropagation();
+      bannerDragEnd();
+    });
+    bannerHeroCarousel.addEventListener('touchcancel', (e) => {
+      e.stopPropagation();
+      bannerDragEnd();
+    });
+    bannerHeroCarousel.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.carousel-nav-btn')) return;
+      e.stopPropagation();
+      bannerDragStart(e.clientX, e.clientY);
+      const onMove = (ev) => bannerDragMove(ev.clientX, ev.clientY, ev);
+      const onUp = () => {
+        bannerDragEnd();
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    });
+
+    if (bannerHeroPrev) {
+      bannerHeroPrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        goToBannerSlide(bannerSlide - 1);
+      });
+    }
+    if (bannerHeroNext) {
+      bannerHeroNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        goToBannerSlide(bannerSlide + 1);
+      });
+    }
+
+    updateBannerDots();
+    updateBannerNavButtons();
+  }
+
+  // Topbar starts flat white; once the hero photo scrolls up underneath it,
+  // switch to the translucent blurred look.
+  const bannerDetailTopbar = document.getElementById('bannerDetailTopbar');
+  const bannerDetailScroll = document.querySelector('.banner-detail-scroll');
+  if (bannerDetailTopbar && bannerDetailScroll) {
+    bannerDetailScroll.addEventListener('scroll', () => {
+      bannerDetailTopbar.classList.toggle('is-scrolled', bannerDetailScroll.scrollTop > 4);
+    }, { passive: true });
+  }
+
+</script>
+</body>
+</html>
