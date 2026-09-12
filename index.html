@@ -5407,6 +5407,29 @@
     opacity: 0.28;
     pointer-events: none;
   }
+  .banner-detail-topbar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 10%, transparent 26%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 10%, transparent 26%);
+    transition: background 0.25s ease, backdrop-filter 0.25s ease;
+    pointer-events: none;
+  }
+  .banner-detail-topbar.is-scrolled::before {
+    background: var(--dm-bg-primary);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  /* Dark mode only: same 0%/55%/transparent mask as above, just a darker
+     translucent tint + heavier blur so the fade reads soft/smoky like the
+     video overlay's topbar, instead of the flat opaque bg-primary fill. */
+  .screen.app-dark .banner-detail-topbar.is-scrolled::before {
+    background: rgba(0,0,0,0.10);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
   .banner-detail-navrow .round-btn,
   .banner-detail-date-pill,
   .banner-detail-navrow .sheet-globe-btn {
@@ -5449,18 +5472,6 @@
     align-items: flex-end;
     justify-content: space-between;
     padding: 0 24px 10px 28px;
-  }
-  .banner-detail-statusbar::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: rgba(0,0,0,0.12);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%);
-    pointer-events: none;
   }
   .banner-detail-navrow {
     position: relative;
@@ -9583,11 +9594,12 @@
     dotColor: '#ff5c9a',
     photo: 'her-in-frame-poster.png',
     photos: [
-      'her-in-frame-poster.png',
-      'her1.png',
-      'her2.png',
-      'allcast1.png'
+      'https://picsum.photos/seed/her-in-frame-gallery1/400/533',
+      'https://picsum.photos/seed/her-in-frame-gallery2/400/533',
+      'https://picsum.photos/seed/her-in-frame-gallery3/400/533',
+      'https://picsum.photos/seed/her-in-frame-gallery4/400/533'
     ],
+    galleryDark: true,
     videos: [
       { id: 'fp3DWGXeTjQ', thumb: 'https://img.youtube.com/vi/fp3DWGXeTjQ/maxresdefault.jpg', title: 'OFFICIAL TRAILER | Her in Frame', captionTitle: 'Her in Frame', captionSub: 'Official Trailer' },
       { id: '-w5aDrR0tVE', thumb: 'https://img.youtube.com/vi/-w5aDrR0tVE/maxresdefault.jpg', title: 'Timeless: Always the One I Love | Aheye 4 EVE | OST. Her in Frame', captionTitle: 'Timeless: Always the One I Love', captionSub: 'OST. Her in Frame', details: {} }
@@ -12246,10 +12258,11 @@
     const photos = event.photos && event.photos.length ? event.photos : (event.photo ? [event.photo] : []);
     currentHeroPhotos = photos;
     currentHeroPhotoIndex = 0;
+    const darkFilter = event.galleryDark ? 'filter:brightness(0.55);' : '';
     bannerDetailThumbGridEl.innerHTML = photos.map((src) =>
       '<div class="banner-detail-thumb-item" data-photo="' + src + '">' +
         '<div class="banner-detail-thumb-frame">' +
-          '<div class="banner-detail-thumb-inner" style="background-image:url(\'' + src + '\');background-position:' + ((event.photoPositions && event.photoPositions[src]) || 'center') + ';"></div>' +
+          '<div class="banner-detail-thumb-inner" style="background-image:url(\'' + src + '\');background-position:' + ((event.photoPositions && event.photoPositions[src]) || 'center') + ';' + darkFilter + '"></div>' +
         '</div>' +
       '</div>'
     ).join('');
